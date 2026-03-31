@@ -16,7 +16,7 @@ def main() -> None:
    
 
     trivia_request = TriviaRequest(
-        amount=1,
+        amount=5,
         category=category,
         difficulty=difficulty,
         question_type=question_type,
@@ -26,41 +26,48 @@ def main() -> None:
     correct_questions = []
     incorrect_questions = []
 
-    while True:
+    should_exit = False
+    while not should_exit:
         token, token_creation_time = utils.get_api_token(
             token=token, token_creation_time=token_creation_time
         )
         trivia_request.token = token
 
-        question = utils.get_trivia_questions(trivia_request=trivia_request)[0]
-       
-        print("\n\n")
-        print(question.question)
-        print("Type 'exit' to stop the programme.")
-       
-        if question.question_type == MULTIPLE_CHOICE:
-            answers = question.incorrect_answers + [question.correct_answer]
-            random.shuffle(answers)
-            correct_answer = answers.index(question.correct_answer)
-            print("Possible answers: ")
-            for i, answer in enumerate(answers):
-                print(f"{i}. {answer}")
-        else:
-            print("True or False")
-            correct_answer = question.correct_answer
+        questions = utils.get_trivia_questions(trivia_request=trivia_request)
 
-        answer = input("answer: ")
-        if answer.lower() == "exit":
-            break
-        elif question.question_type == MULTIPLE_CHOICE and correct_answer and correct_answer == int(answer):
-            print("Correct answer!")
-            correct_questions.append(question.question)
-        elif answer.lower() == question.correct_answer.lower():
-            print("Correct Answer!")
-            correct_questions.append(question.question)
-        else:
-            print(f"Wrong! The correct answer is {correct_answer}")
-            incorrect_questions.append(question.question)
+        for question in questions:
+            print("\n\n")
+            print(question.question)
+            print("Type 'exit' to stop the programme.")
+
+            if question.question_type == MULTIPLE_CHOICE:
+                answers = question.incorrect_answers + [question.correct_answer]
+                random.shuffle(answers)
+                correct_answer_index = answers.index(question.correct_answer)
+                print("Possible answers: ")
+                for i, answer_option in enumerate(answers):
+                    print(f"{i}. {answer_option}")
+            else:
+                print("True or False")
+
+            answer = input("answer: ")
+            if answer.lower() == "exit":
+                should_exit = True
+                break
+
+            if question.question_type == MULTIPLE_CHOICE:
+                if answer.isdigit() and int(answer) == correct_answer_index:
+                    print("Correct answer!")
+                    correct_questions.append(question.question)
+                else:
+                    print(f"Wrong! The correct answer is {correct_answer_index}")
+                    incorrect_questions.append(question.question)
+            elif answer.lower() == question.correct_answer.lower():
+                print("Correct Answer!")
+                correct_questions.append(question.question)
+            else:
+                print(f"Wrong! The correct answer is {question.correct_answer}")
+                incorrect_questions.append(question.question)
    
     utils.save_results(
         correct_questions=correct_questions,
